@@ -24,28 +24,25 @@ You need the following resources, all in the same Confluent Cloud Environment.
 
 Create these 3 Service Accounts, with the associated roles and scopes.
 
-1. *platform-manager* : Service Account associated with the Confluent Cloud API used by Terraform. 
-    - Roles:
-        - <environment> : FlinkAdmin
-        - <cluster> : ResourceOwner - Topics: All topics
-2. *app-manager* : Service Account used by Terraform to manage the Flink statements
-    - Roles:
-        - <environment> : FlinkDeveloper
-        - <environment> : FlinkFunctionDeveloper (for UDFs)
-        - <compute-pool> : FlinkDeveloper
-        - <cluster> : ResourceOwner - Topics: All topics
-        - <environment> : ResourceOwner - Schema: All schema subjects
-        - <cluster> : ResourceOwner - Transactions: prefix `_confluent-flink_`
-        - Assigner: to *statements-runner*
-3. *statements-runner* : Service Account used as Principal of the Flink statements
-    - Roles:
-        - <compute-pool> (or <environment>) : FlinkDeveloper
-        - <cluster> : DeveloperRead - Topics: All topics
-        - <cluster> : DeveloperWrite - Topics: All topics
-        - <cluster> : DeveloperRead - Transactions: prefix `_confluent-flink_`
-        - <cluster> : DeveloperWrite - Transactions: prefix `_confluent-flink_`
-        - <cluster> : DeveloperManage - Topics: All topics
-        - <cluster> : DeveloperWrite - Schema: All schema subjects
+1. Service Account: *platform-manager* - associated with the Confluent Cloud API used by Terraform. 
+      - Role: *FlinkAdmin*, Resource: `<environment>`
+      - Role: *ResourceOwner*, Resource: `<cluster>` - Topics: All topics
+2. Service Account: *app-manager* - used by Terraform to manage the Flink statements
+      - Role: *FlinkDeveloper*, Resource: `<environment>`
+      - Role: *FlinkFunctionDeveloper*, Resource: `<environment>` (for UDFs)
+      - Role: *FlinkDeveloper*, Resource: `<compute-pool>`
+      - Role: *ResourceOwner*, Resource: `<cluster>` - Topics: All topics
+      - Role: *ResourceOwner*, Resource: `<environment>` - Schema: All schema subjects
+      - Role: *ResourceOwner*, Resource: `<cluster>` - Transactions: prefix `_confluent-flink_`
+      - Role-binding: *Assigner* to Service Account *statements-runner*
+3. Service Account: *statements-runner* - used as Principal of the Flink statements
+      - Role: *FlinkDeveloper*, Resource: `<compute-pool>` (or `<environment>`)
+      - Role: *DeveloperRead*, Resource: `<cluster>` - Topics: All topics
+      - Role: *DeveloperWrite*, Resource: `<cluster>` - Topics: All topics
+      - Role: *DeveloperRead*, Resource: `<cluster>` - Transactions: prefix `_confluent-flink_`
+      - Role: *DeveloperWrite*, Resource: `<cluster>` - Transactions: prefix `_confluent-flink_`
+      - Role: *DeveloperManage*, Resource: `<cluster>` - Topics: All topics
+      - Role: *DeveloperWrite*, Resource: `<cluster>` - Schema: All schema subjects
 
 > ℹ️ The "all topics" and "all schema" scopes can be reduced using naming conventions and specifying prefixes to the topic names.
 
