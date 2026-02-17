@@ -12,7 +12,7 @@ In most real scenarios, these resources are created by "someone else" (e.g. a Pl
 
 > You can use the UI, CLI, or Terraform to create these resources beforehand. Their creation is out of scope of this example. 
 
-### Confluent Cloud resources
+### Confluent Cloud Resources
 
 You need the following resources, all in the same Confluent Cloud Environment.
 
@@ -24,18 +24,18 @@ You need the following resources, all in the same Confluent Cloud Environment.
 
 Create these 3 Service Accounts, with the associated roles and scopes.
 
-1. Service Account: *platform-manager* - associated with the Confluent Cloud API used by Terraform. 
+1. Service Account: `platform-manager` - associated with the Confluent Cloud API used by Terraform. 
       - Role: *FlinkAdmin*, Resource: `<environment>`
       - Role: *ResourceOwner*, Resource: `<cluster>` - Topics: All topics
-2. Service Account: *app-manager* - used by Terraform to manage the Flink statements
+2. Service Account: `app-manager` - used by Terraform to manage the Flink statements.
       - Role: *FlinkDeveloper*, Resource: `<environment>`
       - Role: *FlinkFunctionDeveloper*, Resource: `<environment>` (for UDFs)
       - Role: *FlinkDeveloper*, Resource: `<compute-pool>`
       - Role: *ResourceOwner*, Resource: `<cluster>` - Topics: All topics
       - Role: *ResourceOwner*, Resource: `<environment>` - Schema: All schema subjects
       - Role: *ResourceOwner*, Resource: `<cluster>` - Transactions: prefix `_confluent-flink_`
-      - Role-binding: *Assigner* to Service Account *statements-runner*
-3. Service Account: *statements-runner* - used as Principal of the Flink statements
+      - Role-binding: *Assigner* to Service Account `statements-runner`
+3. Service Account: `statements-runner` - used as Principal of the Flink statements.
       - Role: *FlinkDeveloper*, Resource: `<compute-pool>` (or `<environment>`)
       - Role: *DeveloperRead*, Resource: `<cluster>` - Topics: All topics
       - Role: *DeveloperWrite*, Resource: `<cluster>` - Topics: All topics
@@ -46,7 +46,7 @@ Create these 3 Service Accounts, with the associated roles and scopes.
 
 > ℹ️ The "all topics" and "all schema" scopes can be reduced using naming conventions and specifying prefixes to the topic names.
 
-#### How to add the Assigner role to *app-manager*
+#### How to add the Assigner role to `app-manager`
 
 ⚠️ At the moment, the UI does not support adding an Assigner role to a Service Account. You can use the CLI instead. The role-binding is also only visible via CLI.
 
@@ -62,16 +62,16 @@ confluent iam rbac role-binding create \
 confluent iam rbac role-binding list --principal "User:<app-manager-sa-id>"  
 ```
 
-Replace `<app-manager-sa-id>` and `<statements-runner-sa-id>` with the IDs of the *app-manager* and *statements-runner* Service Accounts, respectively. 
+Replace `<app-manager-sa-id>` and `<statements-runner-sa-id>` with the IDs of the `app-manager` and `statements-runner` Service Accounts, respectively. 
 
 
 ### API Keys
 
 Create the following API keys:
 
-* Cloud Resource Management Key associated with the *platform-manager* Service Account. 
-  This is the Confluent Cloud API key passed to Terraform
-* Flink region API key associated with the *app-manager* Service Account, scoped to the same Environment and Region.
+* Cloud Resource Management Key associated with the `platform-manager` Service Account. 
+  This is the Confluent Cloud API key passed to Terraform.
+* Flink region API key associated with the `app-manager` Service Account, scoped to the same Environment and Region.
 
 
 ## Passing parameters to Terraform
@@ -108,7 +108,7 @@ cloud_region               = "<region>"
 
 ## Resources created by Terraform
 
-The goal of this project is to demonstrate the deployment of multiple statements, including CREATE TABLE and long-running jobs (INSERT INTO...).
+The goal of this project is to demonstrate the deployment of multiple statements, including `CREATE TABLE` and long-running jobs (`INSERT INTO`...).
 
 * `customers_faker2` table : a "faker" table to generate data; not associated with any topic.
 * `customers_pk2` table : a normal Flink table, with an associated schema and topic.
@@ -122,7 +122,7 @@ The goal of this project is to demonstrate the deployment of multiple statements
 
 The tables created via `CREATE TABLE` statements are not destroyed when the corresponding statement is destroyed.
 
-If you need to destroy and recreate a table, you need to run a DROP TABLE statement, for example using the CLI.
+If you need to destroy and recreate a table, you need to run a `DROP TABLE` statement, for example using the CLI.
 
 Note that, if you delete the topic instead, you also need to manually delete the associated schema.
 Also, there is no topic associated with "virtual" tables like faker tables.
@@ -135,12 +135,12 @@ Conversely, `INSERT INTO` statements can be destroyed and re-created by Terrafor
 
 For this reason, when using Terraform, it is more convenient to use two separate `CREATE TABLE` and `INSERT INTO` statements instead of a single CTAS statement.
 
-### Similar permissions for *app-manager* and *statements-runner*
+### Similar permissions for `app-manager` and `statements-runner`
 
-You may have noticed that the *app-manager* and *statements-runner* require similar permissions. 
-This reduces the actual separation of concerns between the Service Account used to create the statements and the Service Account used to operate them (start, stop,...). 
+You may have noticed that the `app-manager` and `statements-runner` require similar permissions. 
+This reduces the actual separation of concerns between the Service Account used to create the statements and the Service Account used to operate them (start, stop, ...). 
 
-To simplify the setup, you may merge *app-manager* and *statements-runner*.
+To simplify the setup, you may merge `app-manager` and `statements-runner`.
 
 ### Carry-over Offset in Terraform
 
