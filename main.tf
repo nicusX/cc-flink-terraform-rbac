@@ -2,7 +2,7 @@ terraform {
   required_providers {
     confluent = {
       source  = "confluentinc/confluent"
-      version = "2.62.0"
+      version = "2.72.0"
     }
   }
 }
@@ -12,11 +12,13 @@ locals {
   region = var.cloud_region
 }
 
+# Use the Cloud Resource Management Key credentials
 provider "confluent" {
   cloud_api_key    = var.confluent_cloud_api_key
   cloud_api_secret = var.confluent_cloud_api_secret
 }
 
+# Get the Organization based on the Cloud Resource Management Key
 data "confluent_organization" "main" {}
 
 // Single environment 
@@ -24,13 +26,13 @@ data "confluent_environment" "dev" {
   id = var.environment_id
 }
 
-
+# statement-runner Service Account
 data "confluent_service_account" "statements_runner" {
   id = var.statements_runner_service_account_id
 }
 
 
-
+# Get the Kafka Cluster - must already exists
 data "confluent_kafka_cluster" "main" {
   id = var.kafka_cluster_id
   environment {
@@ -38,12 +40,14 @@ data "confluent_kafka_cluster" "main" {
   }
 }
 
+
 data "confluent_flink_region" "main" {
   cloud  = local.cloud
   region = local.region
 }
 
 
+# Get the Compute Pool - must already exists
 data "confluent_flink_compute_pool" "main" {
   id = var.compute_pool_id
   environment {
@@ -51,7 +55,7 @@ data "confluent_flink_compute_pool" "main" {
   }
 }
 
-
+# Statement: CREATE TABLE customers-pk2 
 resource "confluent_flink_statement" "ct-customers-pk2" {
   organization {
     id = data.confluent_organization.main.id
@@ -64,24 +68,27 @@ resource "confluent_flink_statement" "ct-customers-pk2" {
   }
   rest_endpoint = data.confluent_flink_region.main.rest_endpoint
 
-  // statements-runner Service Account 
+  // Principal (statement owner): statements-runner Service Account 
   principal {
     id = data.confluent_service_account.statements_runner.id
   }
 
+  // Use the Flink Region Key credentials to create the statement
   credentials {
     key    = var.flink_api_key
     secret = var.flink_api_secret
   }
 
+  // Catalog and Database are the Environment and Kafka cluster, respectively
   properties = {
     "sql.current-catalog"  = data.confluent_environment.dev.display_name
     "sql.current-database" = data.confluent_kafka_cluster.main.display_name
   }
-  statement = file("./sql/ct-customers-pk2.sql")
 
+  statement = file("./sql/ct-customers-pk2.sql")
 }
 
+# Statement: CREATE TABLE customers_faker2
 resource "confluent_flink_statement" "ct-customers-faker2" {
   organization {
     id = data.confluent_organization.main.id
@@ -107,11 +114,12 @@ resource "confluent_flink_statement" "ct-customers-faker2" {
     "sql.current-catalog"  = data.confluent_environment.dev.display_name
     "sql.current-database" = data.confluent_kafka_cluster.main.display_name
   }
+
   statement = file("./sql/ct-customer-faker2.sql")
 }
 
 
-
+# Statement: INSERT INTO customners-pk2 FROM SELECT customer-faker2
 resource "confluent_flink_statement" "insert-into-customers-pk2" {
   organization {
     id = data.confluent_organization.main.id
@@ -139,5 +147,6 @@ resource "confluent_flink_statement" "insert-into-customers-pk2" {
   }
   statement = file("./sql/insert-into-customers-pk2.sql")
 
+  // This statement depends on both creating customers-pk2 and customers-faker2
   depends_on = [confluent_flink_statement.ct-customers-pk2, confluent_flink_statement.ct-customers-faker2]
 }
