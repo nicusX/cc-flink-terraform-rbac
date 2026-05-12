@@ -91,9 +91,9 @@ cloud_region               = "<region>"
 
 The goal of this project is to demonstrate the deployment of multiple statements, including `CREATE TABLE` and long-running jobs (`INSERT INTO`...).
 
-* `customers_faker2` table : a "faker" table to generate data; not associated with any topic.
-* `customers_pk2` table : a normal Flink table, with an associated schema and topic.
-* An `INSERT INTO...` statement which copies data into `customers_pk2`. This is the only statement which will be running after Terraform has finished.  
+* `customers_faker` table : a "faker" table to generate data; not associated with any topic.
+* `customers_pk` table : a normal Flink table, with an associated schema and topic.
+* An `INSERT INTO...` statement which copies data into `customers_pk`. This is the only statement which will be running after Terraform has finished.  
 
 
 ## Materialized Tables

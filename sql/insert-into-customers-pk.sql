@@ -1,5 +1,5 @@
 INSERT INTO
-    `customers_pk2`
+    `customers_pk`
 SELECT
     `account_number`,
     `customer_name`,
@@ -9,4 +9,4 @@ SELECT
     `city`,
     `created_at`
 FROM
-    `customers_faker2`
+    `customers_faker`

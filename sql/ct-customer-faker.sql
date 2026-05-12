@@ -1,10 +1,10 @@
-CREATE TABLE `customers_faker2` (
-  `account_number` VARCHAR(2147483647) NOT NULL,
-  `customer_name` VARCHAR(2147483647),
-  `email` VARCHAR(2147483647),
-  `phone_number` VARCHAR(2147483647),
+CREATE TABLE `customers_faker` (
+  `account_number` STRING NOT NULL,
+  `customer_name` STRING,
+  `email` STRING,
+  `phone_number` STRING,
   `date_of_birth` TIMESTAMP(3),
-  `city` VARCHAR(2147483647),
+  `city` STRING,
   `created_at` TIMESTAMP(3) WITH LOCAL TIME ZONE
 )
 DISTRIBUTED INTO 6 BUCKETS

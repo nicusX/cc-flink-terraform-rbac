@@ -1,4 +1,4 @@
-CREATE TABLE `customers_pk2` (
+CREATE TABLE `customers_pk` (
     account_number STRING NOT NULL,
     customer_name STRING,
     email STRING,

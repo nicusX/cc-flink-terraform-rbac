@@ -55,8 +55,8 @@ data "confluent_flink_compute_pool" "main" {
   }
 }
 
-# Statement: CREATE TABLE customers-pk2 
-resource "confluent_flink_statement" "ct-customers-pk2" {
+# Statement: CREATE TABLE customers-pk
+resource "confluent_flink_statement" "ct-customers-pk" {
   organization {
     id = data.confluent_organization.main.id
   }
@@ -85,11 +85,11 @@ resource "confluent_flink_statement" "ct-customers-pk2" {
     "sql.current-database" = data.confluent_kafka_cluster.main.display_name
   }
 
-  statement = file("./sql/ct-customers-pk2.sql")
+  statement = file("./sql/ct-customers-pk.sql")
 }
 
-# Statement: CREATE TABLE customers_faker2
-resource "confluent_flink_statement" "ct-customers-faker2" {
+# Statement: CREATE TABLE customers_faker
+resource "confluent_flink_statement" "ct-customers-faker" {
   organization {
     id = data.confluent_organization.main.id
   }
@@ -115,12 +115,12 @@ resource "confluent_flink_statement" "ct-customers-faker2" {
     "sql.current-database" = data.confluent_kafka_cluster.main.display_name
   }
 
-  statement = file("./sql/ct-customer-faker2.sql")
+  statement = file("./sql/ct-customer-faker.sql")
 }
 
 
-# Statement: INSERT INTO customners-pk2 FROM SELECT customer-faker2
-resource "confluent_flink_statement" "insert-into-customers-pk2" {
+# Statement: INSERT INTO customers-pk FROM SELECT customer-faker
+resource "confluent_flink_statement" "insert-into-customers-pk" {
   organization {
     id = data.confluent_organization.main.id
   }
@@ -145,8 +145,8 @@ resource "confluent_flink_statement" "insert-into-customers-pk2" {
     "sql.current-catalog"  = data.confluent_environment.dev.display_name
     "sql.current-database" = data.confluent_kafka_cluster.main.display_name
   }
-  statement = file("./sql/insert-into-customers-pk2.sql")
+  statement = file("./sql/insert-into-customers-pk.sql")
 
-  // This statement depends on both creating customers-pk2 and customers-faker2
-  depends_on = [confluent_flink_statement.ct-customers-pk2, confluent_flink_statement.ct-customers-faker2]
+  // This statement depends on both creating customers-pk and customers-faker
+  depends_on = [confluent_flink_statement.ct-customers-pk, confluent_flink_statement.ct-customers-faker]
 }
