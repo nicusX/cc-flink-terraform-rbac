@@ -7,10 +7,10 @@ The setup uses API keys associated with separate Service Accounts with more limi
 
 ## Prerequisites
 
-The Terraform code does not create the required Clusters, Flink Compute Pools, Service Accounts, and Keys. 
+The Terraform code does not create the required Kafka Clusters, Flink Compute Pools, Service Accounts (with the required roles), and API Keys. 
 In most real scenarios, these resources are created by "someone else" (e.g. a Platform Team) and handed to the team managing the Flink statements.
 
-> You can use the UI, CLI, or Terraform to create these resources beforehand. Their creation is out of scope of this example. 
+Creating these resources is out of scope for this example.
 
 ### Confluent Cloud Resources
 
@@ -25,15 +25,25 @@ You need the following resources, all in the same Confluent Cloud Environment.
 Create these 3 Service Accounts, with the associated roles and scopes.
 
 1. Service Account: `platform-manager` - associated with the Confluent Cloud API used by Terraform. 
+2. Service Account: `app-manager` - used by Terraform to manage the Flink statements.
+3. Service Account: `statements-runner` - the Principal of the Flink statements. It determines the permissions inherited by the statements.
+
+
+#### Permissions
+
+Roles required for each of the Service Accounts. 
+Refer to [Grant Role-Based Access in Confluent Cloud for Apache Flink](https://docs.confluent.io/cloud/current/flink/operate-and-deploy/flink-rbac.html) public documentation for explanation of each role.
+
+1. Service Account: `platform-manager`
       - Role: *FlinkAdmin*, Resource: Env = `<environment>`
       - Role: *ResourceOwner*, Resource: Kafka cluster =  `<cluster>`, Topics = `*` (All topics in the Kafka cluster)
-2. Service Account: `app-manager` - used by Terraform to manage the Flink statements
+2. Service Account: `app-manager`
       - Role: *FlinkDeveloper*, Resource: Compute Pool = `<compute-pool>` (or Env = `<environment>`, for all Compute Pools in the Environment)
       - Role: *ResourceOwner*, Resource: Kafka cluster = `<cluster>`, Topics = `*` (All topics) 
       - Role: *ResourceOwner*, Resource: Kafka cluster = `<cluster>`, Transactions = `_confluent-flink_*` (All transactions with prefix `_confluent-flink_`)
       - Role: *ResourceOwner*, Resource: Env = `<environment>`, Schema Subjects = `*` (All subjects in the Schema Registry of the Environment)
       - Role: *Assigner*, Principal: Service Account = `statements-runner`
-3. Service Account: `statements-runner` - used as Principal of the Flink statements
+3. Service Account: `statements-runner`
       - Role: *FlinkDeveloper*, Resource: Compute Pool = `<compute-pool>` (or Env = `<environment>`)
       - Role: *DeveloperRead*, Resource: Kafka cluster = `<cluster>`, Topics = `*` (All topics) 
       - Role: *DeveloperWrite*, Resource: Kafka cluster = `<cluster>`, Topics = `*` (All topics) 
@@ -44,7 +54,7 @@ Create these 3 Service Accounts, with the associated roles and scopes.
 
 > ℹ️ The "all topics" and "all schema" scopes can be reduced using naming conventions and specifying prefixes to the topic names.
 
-> The roles *DeveloperManage* on all topics, and *DeveloperWrite* on all Schema Registry subjects assigned to `statements-runner` are required only to execute `CREATE TABLE` statements.
+> The roles *DeveloperManage* on all topics, and *DeveloperWrite* on all Schema Registry subjects assigned to `statements-runner` are required only to execute `CREATE TABLE` statements. If you do not have any `CREATE TABLE` statement you can omit them.
 
 > ⚠️ Setting the *Assigner* role in the UI works the other way around: you go to the Access details of `statements-runner` (the target, not the assigner), select "+ Add role assignment", select the `app-manager` Service Account and the role *Assigner*.
 
@@ -53,7 +63,7 @@ Create these 3 Service Accounts, with the associated roles and scopes.
 Create the following API keys:
 
 1. A *Cloud Resource Management Key* associated with the `platform-manager` Service Account. This is the Confluent Cloud API key passed to Terraform.
-2. A *Flink region API Key* associated with the `app-manager` Service Account, scoped to the same Environment and the cloud region of the compute pool.
+2. A *Flink region API Key* associated with the `app-manager` Service Account, scoped to the same Environment and the cloud region of the Compute Pool.
 
 
 ## Passing parameters to Terraform
@@ -121,13 +131,6 @@ A CTAS (`CREATE TABLE AS SELECT`) would have the same problem as `CREATE TABLE`:
 Conversely, `INSERT INTO` statements can be destroyed and re-created by Terraform if the statement changes. 
 
 With Terraform, you should separate `CREATE TABLE` and `INSERT INTO` into different statements.
-
-### Similar permissions for `app-manager` and `statements-runner`
-
-You may have noticed that the `app-manager` and `statements-runner` require similar permissions. 
-This reduces the actual separation of concerns between the Service Account used to create the statements and the Service Account used to operate them (start, stop, ...). 
-
-To simplify the setup, you may merge `app-manager` and `statements-runner`.
 
 ### Carry-over Offset in Terraform
 
