@@ -46,6 +46,7 @@ Create these 3 Service Accounts, with the associated roles and scopes.
 
 > The roles *DeveloperManage* on all topics, and *DeveloperWrite* on all Schema Registry subjects assigned to `statements-runner` are required only to execute `CREATE TABLE` statements.
 
+> ⚠️ Setting the *Assigner* role in the UI works the other way around: you go to the Access details of `statements-runner` (the target, not the assigner), select "+ Add role assignment", select the `app-manager` Service Account and the role *Assigner*.
 
 ### API Keys
 
@@ -104,12 +105,15 @@ TODO
 
 ### Destroying tables
 
-The tables created via `CREATE TABLE` statements are not destroyed when the corresponding statement is destroyed.
+Terraform handles a SQL statement as a *resource*, not a Flink Table.
 
-If you need to destroy and recreate a table, you need to run a `DROP TABLE` statement, for example using the CLI.
+If you create a `CREATE TABLE` statement, this will run, create the table, and stop when completed.
+Deleting the statement will only delete the stopped statement. It will not affect the table.
 
-Note that, if you delete the topic instead, you also need to manually delete the associated schema.
-Also, there is no topic associated with "virtual" tables like faker tables.
+To delete the table you need to run a separate `DROP TABLE` statement, for example using the CLI.
+
+Note that, if topic and schema are created externally from Flink you do not need to run any `CREATE TABLE` statement. However, you may still need an `ALTER TABLE` statement to configure metadata not derivable from the schema, like watermarks.
+
 
 ### CTAS (`CREATE TABLE AS SELECT`) statements vs `CREATE TABLE` + `INSERT INTO`
 
