@@ -7,7 +7,7 @@ The setup uses API keys associated with separate Service Accounts with more limi
 
 ## Prerequisites
 
-The Terraform code does not create the required Kafka Clusters, Flink Compute Pools, Service Accounts (with the required roles), and API Keys. 
+The Terraform code does not create the required Kafka clusters, Flink Compute Pools, Service Accounts (with the required roles), or API Keys. 
 In most real scenarios, these resources are created by "someone else" (e.g. a Platform Team) and handed to the team managing the Flink statements.
 
 Creating these resources is out of scope for this example.
@@ -24,7 +24,7 @@ You need the following resources, all in the same Confluent Cloud Environment.
 
 Create these 3 Service Accounts, with the associated roles and scopes.
 
-1. Service Account: `platform-manager` - associated with the Confluent Cloud API used by Terraform. 
+1. Service Account: `platform-info` - associated with the Confluent Cloud API used by Terraform. This Service Account has read-only permissions and is only used to fetch information about existing resources.
 2. Service Account: `app-manager` - used by Terraform to manage the Flink statements.
 3. Service Account: `statements-runner` - the Principal of the Flink statements. It determines the permissions inherited by the statements.
 
@@ -32,11 +32,11 @@ Create these 3 Service Accounts, with the associated roles and scopes.
 #### Permissions
 
 Roles required for each of the Service Accounts. 
-Refer to [Grant Role-Based Access in Confluent Cloud for Apache Flink](https://docs.confluent.io/cloud/current/flink/operate-and-deploy/flink-rbac.html) public documentation for explanation of each role.
+Refer to the [Grant Role-Based Access in Confluent Cloud for Apache Flink](https://docs.confluent.io/cloud/current/flink/operate-and-deploy/flink-rbac.html) public documentation for an explanation of each role.
 
-1. Service Account: `platform-manager`
-      - Role: *FlinkAdmin*, Resource: Env = `<environment>`
-      - Role: *ResourceOwner*, Resource: Kafka cluster =  `<cluster>`, Topics = `*` (All topics in the Kafka cluster)
+
+1. Service Account: `platform-info`
+      - Role: *Operator*, Resource: Environment = `<environment>`
 2. Service Account: `app-manager`
       - Role: *FlinkDeveloper*, Resource: Compute Pool = `<compute-pool>` (or Env = `<environment>`, for all Compute Pools in the Environment)
       - Role: *ResourceOwner*, Resource: Kafka cluster = `<cluster>`, Topics = `*` (All topics) 
@@ -62,8 +62,8 @@ Refer to [Grant Role-Based Access in Confluent Cloud for Apache Flink](https://d
 
 Create the following API keys:
 
-1. A *Cloud Resource Management Key* associated with the `platform-manager` Service Account. This is the Confluent Cloud API key passed to Terraform.
-2. A *Flink region API Key* associated with the `app-manager` Service Account, scoped to the same Environment and the cloud region of the Compute Pool.
+1. A *Cloud Resource Management Key* associated with the `platform-info` Service Account, and with *Global* scope. This is the Confluent Cloud API key passed to Terraform.
+2. A *Flink region API Key* associated with the `app-manager` Service Account, scoped to the same Environment and cloud region of the Compute Pool.
 
 
 ## Passing parameters to Terraform
@@ -71,11 +71,11 @@ Create the following API keys:
 The Terraform project expects the following variables:
 
 ```yaml
-## Cloud Resource Management key associated with platform-manager
+## Cloud Resource Management key associated with platform-info Service Account
 confluent_cloud_api_key    = "<key>"
 confluent_cloud_api_secret = "<secret>"
 
-## Flink API key associated with app-manager 
+## Flink API key associated with app-manager Service Account
 flink_api_key              = "<key>"
 flink_api_secret           = "<secret>"
 
@@ -122,7 +122,7 @@ Deleting the statement will only delete the stopped statement. It will not affec
 
 To delete the table you need to run a separate `DROP TABLE` statement, for example using the CLI.
 
-Note that, if topic and schema are created externally from Flink you do not need to run any `CREATE TABLE` statement. However, you may still need an `ALTER TABLE` statement to configure metadata not derivable from the schema, like watermarks.
+Note that if the topic and schema are created externally from Flink, you do not need to run any `CREATE TABLE` statement. However, you may still need an `ALTER TABLE` statement to configure metadata not derivable from the schema, like watermarks.
 
 
 ### CTAS (`CREATE TABLE AS SELECT`) statements vs `CREATE TABLE` + `INSERT INTO`
