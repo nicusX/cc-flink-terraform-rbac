@@ -26,11 +26,6 @@ data "confluent_environment" "dev" {
   id = var.environment_id
 }
 
-# statement-runner Service Account
-data "confluent_service_account" "statements_runner" {
-  id = var.statements_runner_service_account_id
-}
-
 
 # Get the Kafka Cluster - must already exists
 data "confluent_kafka_cluster" "main" {
@@ -70,7 +65,7 @@ resource "confluent_flink_statement" "ct-customers-pk" {
 
   // Principal (statement owner): statements-runner Service Account 
   principal {
-    id = data.confluent_service_account.statements_runner.id
+    id = var.statements_runner_service_account_id
   }
 
   // Use the Flink Region Key credentials to create the statement
@@ -102,7 +97,7 @@ resource "confluent_flink_statement" "ct-customers-faker" {
   rest_endpoint = data.confluent_flink_region.main.rest_endpoint
 
   principal {
-    id = data.confluent_service_account.statements_runner.id
+    id = var.statements_runner_service_account_id
   }
 
   credentials {
@@ -133,7 +128,7 @@ resource "confluent_flink_statement" "insert-into-customers-pk" {
   rest_endpoint = data.confluent_flink_region.main.rest_endpoint
 
   principal {
-    id = data.confluent_service_account.statements_runner.id
+    id = var.statements_runner_service_account_id
   }
 
   credentials {
